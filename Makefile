@@ -6,14 +6,20 @@ FILE_PREFIX=your-book
 
 MD_FILE=$(FILE_PREFIX).md
 EPUB_FILE=$(FILE_PREFIX).epub
-PDF_FILE=$(FILE_PREFIX).pdf
+PDF_PAPERBACK_FILE=$(FILE_PREFIX)_paperback.pdf
+PDF_HARDCOVER_FILE=$(FILE_PREFIX)_hardcover.pdf
 MOBI_FILE=$(FILE_PREFIX).mobi
-TEX_FILE=$(FILE_PREFIX).tex
+TEX_PAPERBACK_FILE=$(FILE_PREFIX)_paperback.tex
+TEX_HARDCOVER_FILE=$(FILE_PREFIX)_hardcover.tex
 REF_FILE=refs.bib
-IDX_FILE=$(FILE_PREFIX).idx
+IDX_PAPERBACK_FILE=$(FILE_PREFIX)_paperback.idx
+IDX_HARDCOVER_FILE=$(FILE_PREFIX)_hardcover.idx
 TMPL=template.tex
 
-all: $(EPUB_FILE) $(PDF_FILE) $(MOBI_FILE)
+PAPERBACK_ISBN=YOUR-PAPERBACK-ISBN
+HARDCOVER_ISBN=YOUR-HARDCOVER-ISBN
+
+all: $(EPUB_FILE) $(PDF_PAPERBACK_FILE) $(PDF_HARDCOVER_FILE) $(MOBI_FILE)
 
 $(EPUB_FILE): $(MD_FILE) $(REF_FILE)
 	$(PANDOC) -o $@ \
@@ -27,14 +33,21 @@ $(EPUB_FILE): $(MD_FILE) $(REF_FILE)
 		--epub-cover-image=images/cover_ebook.jpg \
 		$<
 
-$(PDF_FILE): $(TEX_FILE)
-	$(LATEX) $(TEX_FILE)
-	biber $(basename $(PDF_FILE))
-	makeindex $(IDX_FILE)
-	$(LATEX) $(TEX_FILE)
-	$(LATEX) $(TEX_FILE)
+$(PDF_PAPERBACK_FILE): $(TEX_PAPERBACK_FILE)
+	$(LATEX) $(TEX_PAPERBACK_FILE)
+	biber $(basename $(PDF_PAPERBACK_FILE))
+	makeindex $(IDX_PAPERBACK_FILE)
+	$(LATEX) $(TEX_PAPERBACK_FILE)
+	$(LATEX) $(TEX_PAPERBACK_FILE)
 
-$(TEX_FILE): $(MD_FILE) $(REF_FILE) $(TMPL)
+$(PDF_HARDCOVER_FILE): $(TEX_HARDCOVER_FILE)
+	$(LATEX) $(TEX_HARDCOVER_FILE)
+	biber $(basename $(PDF_HARDCOVER_FILE))
+	makeindex $(IDX_HARDCOVER_FILE)
+	$(LATEX) $(TEX_HARDCOVER_FILE)
+	$(LATEX) $(TEX_HARDCOVER_FILE)
+
+$(TEX_PAPERBACK_FILE): $(MD_FILE) $(REF_FILE) $(TMPL)
 	$(PANDOC) -o $@ \
 		-s \
 		-f markdown+smart \
@@ -43,6 +56,20 @@ $(TEX_FILE): $(MD_FILE) $(REF_FILE) $(TMPL)
 		--csl=style.csl \
 		--filter plugins/pandoc-wrapfig.py \
 		--filter plugins/pandoc-filter-format.py \
+		-M isbn:$(PAPERBACK_ISBN) \
+		--template=$(TMPL) \
+		$<
+
+$(TEX_HARDCOVER_FILE): $(MD_FILE) $(REF_FILE) $(TMPL)
+	$(PANDOC) -o $@ \
+		-s \
+		-f markdown+smart \
+		--toc --toc-depth=2 \
+		--bibliography=$(REF_FILE) \
+		--csl=style.csl \
+		--filter plugins/pandoc-wrapfig.py \
+		--filter plugins/pandoc-filter-format.py \
+		-M isbn:$(HARDCOVER_ISBN) \
 		--template=$(TMPL) \
 		$<
 
@@ -57,6 +84,6 @@ lint: $(REF_FILE)
 
 
 clean:
-	$(RM) $(EPUB_FILE) $(PDF_FILE) $(MOBI_FILE) $(TEX_FILE) $(IDX_FILE) *.aux *.ilg *.ind *.log *.out *.toc *.bbl *.bcf *.blg *.run.xml
+	$(RM) $(EPUB_FILE) $(PDF_FILE) $(MOBI_FILE) $(TEX_PAPERBACK_FILE) $(TEX_HARDCOVER_FILE) $(IDX_PAPERBACK_FILE) $(IDX_HARDCOVER_FILE) *.aux *.ilg *.ind *.log *.out *.toc *.bbl *.bcf *.blg *.run.xml
 
 .PHONY: clean spell lint
